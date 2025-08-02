@@ -310,3 +310,73 @@ export function formatDurationWithHours(minutes: number | null | undefined): str
   
   return `${hours}小时${remainingMinutes}分钟`;
 }
+
+/**
+ * REQ-TM-S03: 获取指定日期的小时专注分布数据
+ * @param date 查询日期 (YYYY-MM-DD 格式)
+ * @param sessions 所有番茄钟会话列表
+ * @returns 小时专注分布数据 (小时 -> 分钟数的映射)
+ */
+export function getHourlyFocusDistribution(
+  date: string,
+  sessions: PomodoroSession[] | null | undefined = []
+): Record<number, number> {
+  // 安全检查
+  const safeSessions = sessions || [];
+  
+  // 初始化24小时的数据结构
+  const hourlyData: Record<number, number> = {};
+  
+  // 日期有效性检查
+  let targetDate: Date;
+  try {
+    targetDate = new Date(date + 'T00:00:00.000Z'); // 使用UTC时间避免时区问题
+    if (isNaN(targetDate.getTime())) {
+      return hourlyData; // 无效日期返回空对象
+    }
+  } catch (error) {
+    return hourlyData; // 日期解析错误返回空对象
+  }
+  
+  const targetDateString = targetDate.toISOString().split('T')[0];
+  
+  // 过滤指定日期的已完成工作会话
+  const targetSessions = safeSessions.filter(session => {
+    if (!session.completed || session.type !== 'work' || !session.startTime || !session.duration) {
+      return false;
+    }
+    
+    try {
+      const sessionDate = new Date(session.startTime);
+      if (isNaN(sessionDate.getTime())) {
+        return false; // 无效的会话时间
+      }
+      
+      const sessionDateString = sessionDate.toISOString().split('T')[0];
+      return sessionDateString === targetDateString;
+    } catch (error) {
+      return false; // 时间解析错误
+    }
+  });
+  
+  // 按小时统计专注时长
+  targetSessions.forEach(session => {
+    if (!session.startTime || !session.duration) return;
+    
+    try {
+      const startTime = new Date(session.startTime);
+      if (isNaN(startTime.getTime())) return; // 无效时间跳过
+      
+      const hour = startTime.getUTCHours(); // 使用UTC小时避免时区问题
+      const duration = Math.max(0, session.duration || 0);
+      
+      if (duration > 0) {
+        hourlyData[hour] = (hourlyData[hour] || 0) + duration;
+      }
+    } catch (error) {
+      // 忽略无效的会话
+    }
+  });
+  
+  return hourlyData;
+}
