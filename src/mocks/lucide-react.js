@@ -48,7 +48,7 @@ export const ListFilter = createMockIcon('ListFilter');
 export const TrendingUp = createMockIcon('TrendingUp');
 
 // Default export
-export default {
+const LucideReactMocks = {
   Play,
   Pause,
   RotateCcw,
@@ -77,3 +77,5 @@ export default {
   ListFilter,
   TrendingUp,
 };
+
+export default LucideReactMocks;

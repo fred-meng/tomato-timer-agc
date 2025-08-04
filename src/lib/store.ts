@@ -32,6 +32,7 @@ interface AppStore extends AppState {
   updateDailyStats: (date: string, updates: Partial<DailyStats>) => void
   getTodayStats: () => DailyStats | null
   getWeeklyStats: () => WeeklyStats | null
+  getDailyTasksWithPomodoros: (date: string) => (Task & { pomodorosUsed: number })[]
 }
 
 const defaultSettings: UserSettings = {
@@ -286,6 +287,36 @@ export const useAppStore = create<AppStore>()(
         }
         
         return calculateWeeklyStats(dailyStats, weekStart)
+      },
+
+      getDailyTasksWithPomodoros: (date: string) => {
+        const state = get()
+        
+        // 获取指定日期的番茄钟会话
+        const daySessions = (state.pomodoroSessions || []).filter(session => {
+          if (!session.startTime || !session.completed) return false
+          const sessionDate = format(new Date(session.startTime), 'yyyy-MM-dd')
+          return sessionDate === date && session.type === 'work'
+        })
+        
+        // 统计每个任务的番茄钟数量
+        const taskPomodoroCount: Record<string, number> = {}
+        daySessions.forEach(session => {
+          if (session.taskId) {
+            taskPomodoroCount[session.taskId] = (taskPomodoroCount[session.taskId] || 0) + 1
+          }
+        })
+        
+        // 获取今天有番茄钟记录的任务
+        const tasksWithPomodoros = state.tasks
+          .filter(task => taskPomodoroCount[task.id] > 0)
+          .map(task => ({
+            ...task,
+            pomodorosUsed: taskPomodoroCount[task.id]
+          }))
+          .sort((a, b) => b.pomodorosUsed - a.pomodorosUsed) // 按番茄钟数量降序排列
+        
+        return tasksWithPomodoros
       }
     }),
     {

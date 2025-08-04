@@ -22,7 +22,6 @@ const customJestConfig = {
     // Mock Framer Motion
     '^framer-motion$': '<rootDir>/src/mocks/framer-motion.js',
   },
-  preset: 'ts-jest',
   // 代码覆盖率配置
   collectCoverage: false, // 默认关闭，通过命令行参数控制
   collectCoverageFrom: [

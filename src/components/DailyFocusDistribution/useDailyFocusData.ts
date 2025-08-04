@@ -3,8 +3,8 @@
  * 处理每日专注数据的获取和状态管理
  */
 
-import { useState, useEffect } from 'react';
-import { getHourlyFocusDistribution } from '../../lib/statsCalculator';
+import { useState, useEffect, useCallback } from 'react';
+import { getHourlyFocusDistribution } from '@/lib/statsCalculator';
 
 interface UseDailyFocusDataProps {
   selectedDate: string;
@@ -26,7 +26,7 @@ export const useDailyFocusData = ({
   const [error, setError] = useState<string | null>(null);
 
   // 获取专注时长分布数据
-  const fetchFocusData = async (date: string) => {
+  const fetchFocusData = useCallback(async (date: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -48,12 +48,12 @@ export const useDailyFocusData = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [getSessionsData]);
 
   // 初始化和日期变化时获取数据
   useEffect(() => {
     fetchFocusData(selectedDate);
-  }, [selectedDate, getSessionsData]);
+  }, [selectedDate, fetchFocusData]);
 
   return { data, loading, error };
 };

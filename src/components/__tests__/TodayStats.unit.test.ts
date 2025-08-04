@@ -438,4 +438,5 @@ describe('REQ-TM-S01: 今日关键指标计算逻辑 - 单元测试', () => {
   });
 });
 
-export default {};
+const TodayStatsUnitTests = {};
+export default TodayStatsUnitTests;

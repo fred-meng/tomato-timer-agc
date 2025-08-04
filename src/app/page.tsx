@@ -5,6 +5,7 @@ import { BottomNavigation } from '@/components/BottomNavigation'
 import { useAppStore } from '@/lib/store'
 import TasksTab from '@/components/TasksTab'
 import TodayStats from '@/components/TodayStats'
+import DailyTasksList from '@/components/DailyTasksList'
 import { ClientOnly } from '@/components/ClientOnly'
 
 function AppContent() {
@@ -20,6 +21,7 @@ function AppContent() {
         return (
           <div className="p-6 space-y-6">
             <TodayStats />
+            <DailyTasksList />
             
             {/* 其他统计功能的占位符 */}
             <div className="flex flex-col items-center justify-center min-h-[30vh] p-6">

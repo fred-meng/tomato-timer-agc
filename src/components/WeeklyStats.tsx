@@ -63,7 +63,7 @@ const EmptyStateDisplay: React.FC = () => (
  * 最佳表现日组件
  */
 interface BestPerformanceDayProps {
-  mostProductiveDay: string;
+  mostProductiveDay?: string;
 }
 
 const BestPerformanceDay: React.FC<BestPerformanceDayProps> = ({ mostProductiveDay }) => {

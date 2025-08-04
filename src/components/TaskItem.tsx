@@ -15,6 +15,10 @@ const priorityConfig = {
   [Priority.HIGH]: { icon: Flag, color: 'text-red-500', label: '高优先级' },
   [Priority.MEDIUM]: { icon: Flag, color: 'text-yellow-500', label: '中优先级' },
   [Priority.LOW]: { icon: Flag, color: 'text-green-500', label: '低优先级' },
+  // 兼容小写和其他可能的值
+  'high': { icon: Flag, color: 'text-red-500', label: '高优先级' },
+  'medium': { icon: Flag, color: 'text-yellow-500', label: '中优先级' },
+  'low': { icon: Flag, color: 'text-green-500', label: '低优先级' },
 };
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, onEditTask }) => {
@@ -23,8 +27,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEditTask }) => {
     deleteTask: state.deleteTask,
   }));
 
-  const PriorityIcon = priorityConfig[task.priority].icon;
-  const priorityColor = priorityConfig[task.priority].color;
+  const priorityInfo = priorityConfig[task.priority] || priorityConfig[Priority.MEDIUM];
+  const PriorityIcon = priorityInfo.icon;
+  const priorityColor = priorityInfo.color;
 
   const handleToggle = () => toggleTaskCompletion(task.id);
   const handleDelete = () => {

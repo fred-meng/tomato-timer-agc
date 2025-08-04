@@ -339,4 +339,5 @@ describe('REQ-TM-S01: 查看今日关键指标 - 验收测试', () => {
   });
 });
 
-export default {};
+const TodayStatsAcceptanceTests = {};
+export default TodayStatsAcceptanceTests;
