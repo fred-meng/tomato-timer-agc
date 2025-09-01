@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { AppState, PomodoroTimer, Task, UserSettings, DailyStats, WeeklyStats } from '@/types'
+import type { AppState, PomodoroTimer, Task, UserSettings, DailyStats, WeeklyStats, MonthlyStats } from '@/types'
 import { generateId, getTodayString } from '@/lib/utils'
 import { calculateTodayStats, calculateWeeklyStats } from '@/lib/statsCalculator'
-import { startOfWeek, subDays, format } from 'date-fns'
+import { startOfWeek, startOfMonth, endOfMonth, subDays, format, eachDayOfInterval } from 'date-fns'
 
 interface AppStore extends AppState {
   // Timer actions
@@ -31,7 +31,8 @@ interface AppStore extends AppState {
   addDailyStats: (stats: DailyStats) => void
   updateDailyStats: (date: string, updates: Partial<DailyStats>) => void
   getTodayStats: () => DailyStats | null
-  getWeeklyStats: () => WeeklyStats | null
+  getWeeklyStats: (weekStart?: Date) => WeeklyStats | null
+  getMonthlyStats: (monthStart?: Date) => MonthlyStats | null
   getDailyTasksWithPomodoros: (date: string) => (Task & { pomodorosUsed: number })[]
 }
 
@@ -256,15 +257,15 @@ export const useAppStore = create<AppStore>()(
         return calculateTodayStats(state.tasks, state.pomodoroSessions || [])
       },
 
-      getWeeklyStats: () => {
+      getWeeklyStats: (weekStart?: Date) => {
         const state = get()
-        const today = new Date()
-        const weekStart = startOfWeek(today, { weekStartsOn: 1 }) // 周一开始
+        const today = weekStart || new Date()
+        const weekStartDate = startOfWeek(today, { weekStartsOn: 1 }) // 周一开始
         
         // 生成最近7天的每日统计数据
         const dailyStats: DailyStats[] = []
         for (let i = 0; i < 7; i++) {
-          const date = subDays(weekStart, -i)
+          const date = subDays(weekStartDate, -i)
           const dateStr = format(date, 'yyyy-MM-dd')
           
           // 获取当天的任务和会话数据
@@ -286,7 +287,59 @@ export const useAppStore = create<AppStore>()(
           dailyStats.push(dayStats)
         }
         
-        return calculateWeeklyStats(dailyStats, weekStart)
+        return calculateWeeklyStats(dailyStats, weekStartDate)
+      },
+
+      getMonthlyStats: (monthStart?: Date) => {
+        const state = get()
+        const today = monthStart || new Date()
+        const monthStartDate = startOfMonth(today)
+        const monthEndDate = endOfMonth(today)
+        
+        // 生成整个月的每日统计数据
+        const monthDays = eachDayOfInterval({ start: monthStartDate, end: monthEndDate })
+        const dailyStats: DailyStats[] = []
+        
+        monthDays.forEach(date => {
+          const dateStr = format(date, 'yyyy-MM-dd')
+          
+          // 获取当天的任务和会话数据
+          const dayTasks = state.tasks.filter(task => {
+            if (!task.completedAt) return false
+            const completedDate = format(new Date(task.completedAt), 'yyyy-MM-dd')
+            return completedDate === dateStr
+          })
+          
+          const daySessions = (state.pomodoroSessions || []).filter(session => {
+            if (!session.startTime) return false
+            const sessionDate = format(new Date(session.startTime), 'yyyy-MM-dd')
+            return sessionDate === dateStr
+          })
+          
+          // 计算当天统计数据
+          const dayStats = calculateTodayStats(dayTasks, daySessions)
+          dayStats.date = dateStr
+          dailyStats.push(dayStats)
+        })
+        
+        // 计算月度统计
+        const totalPomodoros = dailyStats.reduce((sum, day) => sum + day.totalPomodoros, 0)
+        const averageFocusScore = dailyStats.length > 0 
+          ? dailyStats.reduce((sum, day) => sum + day.focusScore, 0) / dailyStats.length 
+          : 0
+        
+        const mostProductiveDay = dailyStats.reduce((max, day) => 
+          day.totalPomodoros > max.totalPomodoros ? day : max, 
+          dailyStats[0] || { date: format(monthStartDate, 'yyyy-MM-dd'), totalPomodoros: 0 }
+        )
+        
+        return {
+          monthStart: format(monthStartDate, 'yyyy-MM-dd'),
+          dailyStats,
+          totalPomodoros,
+          averageFocusScore,
+          mostProductiveDay: mostProductiveDay.date
+        } as MonthlyStats
       },
 
       getDailyTasksWithPomodoros: (date: string) => {

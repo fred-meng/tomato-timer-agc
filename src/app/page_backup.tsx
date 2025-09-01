@@ -7,7 +7,6 @@ import TasksTab from '@/components/TasksTab'
 import TodayStats from '@/components/TodayStats'
 import DailyTasksList from '@/components/DailyTasksList'
 import { ClientOnly } from '@/components/ClientOnly'
-import PeriodSummary from '@/components/PeriodSummary'
 
 function AppContent() {
   const { ui } = useAppStore()
@@ -24,8 +23,16 @@ function AppContent() {
             <TodayStats />
             <DailyTasksList />
             
-            {/* REQ-TM-S05: 查看周/月度数据摘要功能 */}
-            <PeriodSummary />
+            {/* 其他统计功能的占位符 */}
+            <div className="flex flex-col items-center justify-center min-h-[30vh] p-6">
+              <div className="text-4xl mb-4">�</div>
+              <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                更多统计
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                周报告、月总结等功能即将推出
+              </p>
+            </div>
           </div>
         )
       default:

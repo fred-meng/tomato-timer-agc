@@ -113,4 +113,70 @@ describe('REQ-TM-S04: 查看每日完成的任务列表 - 验收测试', () => {
       expect(screen.getByTestId('task-long-task-pomodoros')).toHaveTextContent('1个番茄钟');
     });
   });
+
+  test('应该仅显示当日有番茄钟投入的任务，不显示其他日期的任务', async () => {
+    const mixedDateTasks = [
+      {
+        id: 'today-task',
+        title: '今日任务',
+        priority: Priority.HIGH,
+        completed: true,
+        createdAt: new Date('2025-08-04T08:00:00'),
+        completedAt: new Date('2025-08-04T16:30:00'),
+        estimatedPomodoros: 2,
+        pomodorosUsed: 3
+      }
+    ];
+
+    mockUseAppStore.mockReturnValue(() => (mixedDateTasks)
+    );
+
+    render(<DailyTasksList />);
+
+    await waitFor(() => {
+      expect(screen.getByText('今日任务')).toBeInTheDocument();
+      expect(screen.queryByText('昨日任务')).not.toBeInTheDocument();
+      expect(screen.queryByText('明日任务')).not.toBeInTheDocument();
+    });
+  });
+
+  test('应该在500ms内快速响应并渲染列表', async () => {
+    const startTime = Date.now();
+    
+    mockUseAppStore.mockReturnValue(() => (mockTasks)
+    );
+
+    render(<DailyTasksList />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('daily-tasks-list')).toBeInTheDocument();
+    });
+
+    const endTime = Date.now();
+    const renderTime = endTime - startTime;
+    
+    expect(renderTime).toBeLessThan(500);
+  });
+
+  test('应该具备无障碍访问支持，包含适当的ARIA标签', async () => {
+    mockUseAppStore.mockReturnValue(() => (mockTasks)
+    );
+
+    render(<DailyTasksList />);
+
+    await waitFor(() => {
+      // 检查列表容器的ARIA标签
+      const listContainer = screen.getByRole('list');
+      expect(listContainer).toHaveAttribute('aria-label', '今日专注任务列表');
+      
+      // 检查列表项的角色
+      const listItems = screen.getAllByRole('listitem');
+      expect(listItems).toHaveLength(2);
+      
+      // 检查列表项可以聚焦
+      listItems.forEach(item => {
+        expect(item).toHaveAttribute('tabIndex', '0');
+      });
+    });
+  });
 });

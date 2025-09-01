@@ -56,6 +56,14 @@ export interface WeeklyStats {
   mostProductiveDay: string
 }
 
+export interface MonthlyStats {
+  monthStart: string // YYYY-MM-DD
+  dailyStats: DailyStats[]
+  totalPomodoros: number
+  averageFocusScore: number
+  mostProductiveDay: string
+}
+
 // 用户设置类型
 export interface UserSettings {
   workDuration: number // 分钟，默认25
